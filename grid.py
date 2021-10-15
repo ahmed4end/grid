@@ -1,9 +1,12 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import random 
 
-A4 = (2480, 3508)
+import sys
+sys.path.append(r'F:/Python/mathar/assets/fonts/')
 
 class Grid:
+
+	A4 = (2480, 3508)
 
 	def __init__(self,  rows:int, cols:int, width:int=2480, height:int=3508, *args, **kwargs):
 		'''
@@ -17,6 +20,7 @@ class Grid:
 				margin: (top,right,bottom,left) or integer
 				cell_margin: cell margin to all sides.
 		'''
+		self.size = (width, height)
 		self.cols = cols
 		self.rows = rows
 		self.width = width
@@ -27,9 +31,15 @@ class Grid:
 		self.border_width = kwargs.get('border_width',1)
 		self.cell_margin = kwargs.get('cell_margin',1)
 		self.margin = self._margin()
-		
 		self.grid_metrics = self._grid_metrics()
-		
+		self.cell_width = self.grid_metrics['col_height']-kwargs['cell_margin']*2-kwargs['border_width'] #-self.margin[1]
+		self.cell_height = self.grid_metrics['row_height']-kwargs['cell_margin']*2-kwargs['border_width']#-self.margin[0]
+
+		self.header = self.kwargs.get('header','')
+		self.footer = self.kwargs.get('footer','')
+		#init
+		self.draw_lines()
+		self.draw_headers()
 
 	def _grid_metrics(self,):
 		row_piece_val = (self.height-self.margin[0]-self.margin[2])//self.rows
@@ -71,8 +81,8 @@ class Grid:
 			self.draw.rectangle(
 				xy=(self.margin[3]-self.border_width//2, 
 					self.margin[0]-self.border_width//2, 
-					A4[0]-self.margin[2]+self.border_width//2, 
-					A4[1]-self.margin[1]+self.border_width//2),
+					self.size[0]-self.margin[2]+self.border_width//2, 
+					self.size[1]-self.margin[1]+self.border_width//2),
 				fill=None,
 				outline=self.kwargs.get('border_color','black'), 
 				width=self.border_width)
@@ -110,12 +120,21 @@ class Grid:
 			for col in row:
 				self.draw.rectangle(xy=col,fill=self.rndcolor())
 
+	def draw_headers(self):
+		''' draw header and footer '''
+		font = ImageFont.truetype('assets/fonts/Sans.ttf', 50)
+		# draw header
+		(width, height), (_, offset_y) = font.font.getsize(self.header)
+		self.draw.text( (self.width//2-width//2, self.margin[0]//2-height//2), text=self.header, fill='black', font=font)
+		# draw footer
+		(width, height), (_, offset_y) = font.font.getsize(self.footer)
+		self.draw.text( (self.width//2-width//2, self.height-self.margin[3]//2-height//2), text=self.footer, fill='black', font=font)
+
 if __name__=='__main__':
 	from pprint import pprint
-	obj = Grid(20,4, border_width=25, cell_margin=25, margin=50, bgcolor='lightgrey')
+	obj = Grid(15,4, border_width=25, cell_margin=25, margin=50, bgcolor='lightgrey')
 	details = obj.grid_metrics
 	print(details)
-	obj.draw_lines()
 	obj.color_cells()
 	pprint(obj.cells)
 	obj.image.show()
